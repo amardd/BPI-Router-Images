@@ -232,7 +232,7 @@ if [[ ${board} != "bpi-r2pro" ]];then
 		echo "mt7615e" | sudo tee -a ${targetdir}/etc/modules
 	fi
 
-	if [[ ${board} == "bpi-r4" ]];then
+	if [[ ${board} == "bpi-r4" || ${board} == "xuntai-esr2113" ]];then
 		#remove lan0 from lanbr0
 		sudo sed 's/lan0 //' ${targetdir}/etc/systemd/network/21-lanbr-bind.network
 		#copy actual firmware files to image
