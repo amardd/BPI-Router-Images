@@ -33,6 +33,21 @@ if [ ${PACKAGE_Error} == 1 ]; then exit 1; fi
 
 LDEV=`sudo losetup -f`
 
+function wait_for_partition() {
+	local partdev=$1
+	local retries=50
+
+	while [[ $retries -gt 0 ]]; do
+		if [[ -b "$partdev" ]];then
+			return 0
+		fi
+		sleep 0.2
+		retries=$((retries - 1))
+	done
+
+	return 1
+}
+
 function cleanup() {
 	sudo umount mnt/BPI-ROOT/proc
 	sudo umount mnt/BPI-BOOT
@@ -78,11 +93,13 @@ cp $imgfile $newimgfile
 echo "unpack imgfile ($newimgfile)..."
 gunzip $newimgfile
 echo "setting up imgfile to loopdev..."
-sudo losetup ${LDEV} ${newimgfile%.*} 1> /dev/null
+sudo losetup -P ${LDEV} ${newimgfile%.*} 1> /dev/null
 if [[ $? -ne 0 ]];then echo "losetup ${LDEV} failed (${newimgfile%.*})"; exit 1; fi
 echo "mounting loopdev..."
 sudo partprobe ${LDEV}
 if [[ $? -ne 0 ]];then echo "partprobe failed"; exit 1; fi
+if ! wait_for_partition "${LDEV}p${mmcbootpart}";then echo "boot partition node missing (${LDEV}p${mmcbootpart})"; exit 1; fi
+if ! wait_for_partition "${LDEV}p${mmcrootpart}";then echo "root partition node missing (${LDEV}p${mmcrootpart})"; exit 1; fi
 
 #replacing bl2 (e.g. R4 8GB)
 if [[ -n "$replacebl2" ]] && [[ -n "$bl2file" ]] && [[ -e "$bl2file" ]];then

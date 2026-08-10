@@ -29,7 +29,7 @@ case "$board" in
 		mmcrootpart=3
 		arch="arm64"
 	;;
-	"bpi-r3"|"bpi-r3mini"|"bpi-r4"|"xuntai-esr2113")
+	"bpi-r3"|"bpi-r3mini"|"bpi-r4")
 		mmcdev=0
 		mmcbootpart=5
 		mmcrootpart=6
@@ -37,6 +37,12 @@ case "$board" in
 		if [[ "$board" == "bpi-r3mini" ]];then
 			device="emmc"
 		fi
+	;;
+	"xuntai-esr2113")
+		mmcdev=0
+		mmcbootpart=1
+		mmcrootpart=2
+		arch="arm64"
 	;;
 	*)
 		echo "missing/unsupported board $1";exit

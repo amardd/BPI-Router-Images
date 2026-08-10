@@ -6,6 +6,22 @@ board=$(echo $imgfile | sed -e 's/_.*$//')
 
 source config.sh
 
+function wait_for_partition()
+{
+	partdev=$1
+	retries=50
+
+	while [[ $retries -gt 0 ]];do
+		if [[ -b "$partdev" ]];then
+			return 0
+		fi
+		sleep 0.2
+		retries=$((retries - 1))
+	done
+
+	return 1
+}
+
 function mount_image()
 {
 	newimgfile=$1
@@ -13,11 +29,13 @@ function mount_image()
 	echo "unpack imgfile ($newimgfile)..."
 	gunzip $newimgfile
 	echo "setting up imgfile to loopdev..."
-	sudo losetup ${LDEV} ${newimgfile%.*} 1> /dev/null
+	sudo losetup -P ${LDEV} ${newimgfile%.*} 1> /dev/null
 	if [[ $? -ne 0 ]];then echo "losetup ${LDEV} failed (${newimgfile%.*})"; exit 1; fi
 	echo "mounting loopdev..."
 	sudo partprobe ${LDEV}
 	if [[ $? -ne 0 ]];then echo "partprobe failed"; exit 1; fi
+	if ! wait_for_partition "${LDEV}p${mmcbootpart}";then echo "boot partition node missing (${LDEV}p${mmcbootpart})"; exit 1; fi
+	if ! wait_for_partition "${LDEV}p${mmcrootpart}";then echo "root partition node missing (${LDEV}p${mmcrootpart})"; exit 1; fi
 	mkdir -p mnt/BPI-{B,R}OOT
 	echo "mount ${LDEV}p${mmcbootpart} => mnt/BPI-BOOT"
 	sudo mount ${LDEV}p${mmcbootpart} mnt/BPI-BOOT

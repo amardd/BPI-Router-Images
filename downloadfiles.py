@@ -39,6 +39,16 @@ if os.path.isfile(conffile):
     config=read_settings(conffile)
     print(config)
 
+skip_uboot = config.get("skipubootdownload") == "1"
+skip_kernel = config.get("skipkerneldownload") == "1"
+local_img = config.get("imgfile")
+local_kernel = config.get("kernelfile")
+
+if skip_uboot and skip_kernel and local_img and local_kernel \
+   and os.path.isfile(local_img) and os.path.isfile(local_kernel):
+    print("using local u-boot and kernel files, skipping release lookups")
+    sys.exit(0)
+
 newconfig = config.copy()
 
 def download(url, file_name=None):
